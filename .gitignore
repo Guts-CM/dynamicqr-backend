@@ -1,10 +1,53 @@
-HELP.md
+# Maven
 target/
-!.mvn/wrapper/maven-wrapper.jar
-!**/src/main/**/target/
-!**/src/test/**/target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+.flattened-pom.xml
 
-### STS ###
+# Empaquetado
+*.class
+*.jar
+*.war
+*.ear
+*.nar
+*.zip
+*.tar.gz
+*.rar
+!.mvn/wrapper/maven-wrapper.jar
+
+# WildFly / despliegue
+*.deployed
+*.undeployed
+*.failed
+*.dodeploy
+*.skipdeploy
+*.isdeploying
+*.pending
+
+# Logs y crash dumps
+*.log
+logs/
+hs_err_pid*
+replay_pid*
+
+# Secretos y overrides locales
+.env
+.env.*
+!.env.example
+application-local.properties
+application-secret.properties
+*.local.properties
+
+# Spring
+HELP.md
+
+# STS / Eclipse
 .apt_generated
 .classpath
 .factorypath
@@ -12,14 +55,16 @@ target/
 .settings
 .springBeans
 .sts4-cache
+bin/
 
-### IntelliJ IDEA ###
+# IntelliJ IDEA
 .idea
 *.iws
 *.iml
 *.ipr
+out/
 
-### NetBeans ###
+# NetBeans
 /nbproject/private/
 /nbbuild/
 /dist/
@@ -29,9 +74,20 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 
-### VS Code ###
+# VS Code / Cursor
 .vscode/
+.cursor/
+!.cursor/rules/
+!.cursor/rules/**
 
-### OS ###
+# OS
 .DS_Store
 Thumbs.db
+desktop.ini
+ehthumbs.db
+*~
+*.bak
+*.orig
+*.swp
+*.tmp
+~$*
