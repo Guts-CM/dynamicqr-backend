@@ -1,9 +1,17 @@
 package dynamicqr.resource;
 
-import dynamicqr.domain.Qr;
+import dynamicqr.dto.MensajeResponse;
+import dynamicqr.dto.QrCreateRequest;
+import dynamicqr.dto.QrResponse;
+import dynamicqr.dto.QrUpdateRequest;
+import dynamicqr.dto.VersionResponse;
+import dynamicqr.security.SecurityUtils;
 import dynamicqr.service.QrService;
-import java.net.URI;
+import dynamicqr.service.VersionService;
+import jakarta.validation.Valid;
 import java.util.List;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,46 +21,92 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 @RestController
 @RequestMapping("/api/qr")
 public class QrResource {
 
-    private final QrService qrService;
+    private static final MediaType SVG = MediaType.parseMediaType("image/svg+xml");
 
-    public QrResource(QrService qrService) {
+    private final QrService qrService;
+    private final VersionService versionService;
+    private final SecurityUtils securityUtils;
+
+    public QrResource(
+            QrService qrService,
+            VersionService versionService,
+            SecurityUtils securityUtils) {
         this.qrService = qrService;
+        this.versionService = versionService;
+        this.securityUtils = securityUtils;
     }
 
     @GetMapping
-    public List<Qr> findAll() {
+    public List<QrResponse> findAll() {
         return qrService.findAll();
     }
 
     @GetMapping("/{id}")
-    public Qr findById(@PathVariable Integer id) {
+    public QrResponse findById(@PathVariable Integer id) {
         return qrService.findById(id);
     }
 
+    @GetMapping(value = "/{id}/svg", produces = "image/svg+xml")
+    public ResponseEntity<String> svg(@PathVariable Integer id) {
+        return ResponseEntity.ok().contentType(SVG).body(qrService.generarSvg(id));
+    }
+
+    // Uso de escaneos pendiente hasta desplegar en un servidor publico.
+    // Inyectar EscaneoService y descomentar:
+    // @GetMapping("/{id}/escaneos")
+    // public List<EscaneoResponse> escaneos(@PathVariable Integer id) {
+    //     qrService.findById(id);
+    //     return escaneoService.findByQrId(id);
+    // }
+
+    @GetMapping("/{id}/versiones")
+    public List<VersionResponse> versiones(@PathVariable Integer id) {
+        qrService.findById(id);
+        return versionService.findByQrId(id);
+    }
+
     @PostMapping
-    public ResponseEntity<Qr> create(@RequestBody Qr qr) {
-        Qr creado = qrService.create(qr);
-        URI location = ServletUriComponentsBuilder.fromCurrentRequest()
-                .path("/{id}")
-                .buildAndExpand(creado.getQrId())
-                .toUri();
-        return ResponseEntity.created(location).body(creado);
+    public ResponseEntity<MensajeResponse> create(@Valid @RequestBody QrCreateRequest request) {
+        try {
+            qrService.create(request, securityUtils.currentUserId());
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(new MensajeResponse("qr creado correctamente"));
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(new MensajeResponse(ex.getMessage()));
+        } catch (Exception ex) {
+            return ResponseEntity.badRequest()
+                    .body(new MensajeResponse("hubo un error al crear el qr"));
+        }
     }
 
     @PutMapping("/{id}")
-    public Qr update(@PathVariable Integer id, @RequestBody Qr qr) {
-        return qrService.update(id, qr);
+    public ResponseEntity<MensajeResponse> update(
+            @PathVariable Integer id, @Valid @RequestBody QrUpdateRequest request) {
+        try {
+            qrService.update(id, request, securityUtils.currentUserId());
+            return ResponseEntity.ok(new MensajeResponse("qr actualizado correctamente"));
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(new MensajeResponse(ex.getMessage()));
+        } catch (Exception ex) {
+            return ResponseEntity.badRequest()
+                    .body(new MensajeResponse("hubo un error al actualizar el qr"));
+        }
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Integer id) {
-        qrService.delete(id);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<MensajeResponse> toggleActivo(@PathVariable Integer id) {
+        try {
+            boolean activo = qrService.toggleActivo(id, securityUtils.currentUserId());
+            String mensaje = activo ? "qr activado correctamente" : "qr eliminado correctamente";
+            return ResponseEntity.ok(new MensajeResponse(mensaje));
+        } catch (Exception ex) {
+            return ResponseEntity.badRequest()
+                    .body(new MensajeResponse("hubo un error al eliminar o activar el qr"));
+        }
     }
 }

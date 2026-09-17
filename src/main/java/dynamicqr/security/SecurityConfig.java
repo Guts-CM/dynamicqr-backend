@@ -21,12 +21,15 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+    private final PublicEndpointMatcher publicEndpointMatcher;
 
     public SecurityConfig(
             JwtAuthenticationFilter jwtAuthenticationFilter,
-            JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint) {
+            JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint,
+            PublicEndpointMatcher publicEndpointMatcher) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
         this.jwtAuthenticationEntryPoint = jwtAuthenticationEntryPoint;
+        this.publicEndpointMatcher = publicEndpointMatcher;
     }
 
     @Bean
@@ -36,9 +39,7 @@ public class SecurityConfig {
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(jwtAuthenticationEntryPoint))
                 .authorizeHttpRequests(auth -> auth.requestMatchers(antMatcher(HttpMethod.OPTIONS, "/**"))
                         .permitAll()
-                        .requestMatchers(
-                                antMatcher("/api/auth/login"),
-                                antMatcher("/dynamicqr-backend/api/auth/login"))
+                        .requestMatchers(publicEndpointMatcher)
                         .permitAll()
                         // Primer registro (usuario 1): descomentar las siguientes lineas, desplegar,
                         // crear el admin con POST /api/auth/register y volver a comentarlas

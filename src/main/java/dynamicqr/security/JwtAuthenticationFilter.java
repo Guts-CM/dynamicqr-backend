@@ -21,23 +21,26 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final UsuarioUserDetailsService usuarioUserDetailsService;
+    private final PublicEndpointMatcher publicEndpointMatcher;
 
     public JwtAuthenticationFilter(
-            JwtService jwtService, UsuarioUserDetailsService usuarioUserDetailsService) {
+            JwtService jwtService,
+            UsuarioUserDetailsService usuarioUserDetailsService,
+            PublicEndpointMatcher publicEndpointMatcher) {
         this.jwtService = jwtService;
         this.usuarioUserDetailsService = usuarioUserDetailsService;
+        this.publicEndpointMatcher = publicEndpointMatcher;
     }
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        String path = request.getServletPath();
-        String uri = request.getRequestURI();
-        boolean login = path.equals("/api/auth/login") || uri.endsWith("/api/auth/login");
+        boolean publico = publicEndpointMatcher.matches(request);
         // Primer registro (usuario 1): descomentar las dos lineas siguientes,
         // desplegar, crear el admin y volver a comentarlas para exigir token en register.
-        // boolean register = path.equals("/api/auth/register") || uri.endsWith("/api/auth/register");
-        // return login || register;
-        return login;
+        // boolean register = request.getServletPath().equals("/api/auth/register")
+        //         || request.getRequestURI().endsWith("/api/auth/register");
+        // return publico || register;
+        return publico;
     }
 
     @Override

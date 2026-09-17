@@ -11,6 +11,8 @@ import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import java.util.Objects;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Entity
 @Table(
@@ -33,6 +35,7 @@ public class Escaneo {
     @Column(name = "qr_id", nullable = false)
     private Integer qrId;
 
+    @JdbcTypeCode(SqlTypes.INET)
     @Column(name = "ip", columnDefinition = "inet")
     private String ip;
 
