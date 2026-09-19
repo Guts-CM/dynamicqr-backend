@@ -594,3 +594,16 @@ Versión Maven: **0.0.1-SNAPSHOT**. Desarrollo activo.
 ## Licencia
 
 No hay archivo `LICENSE` en el repositorio.
+
+---
+
+## Backup de la base de datos
+
+El esquema no se genera con Hibernate (`ddl-auto=none`) ni hay migraciones en el repositorio. Tras clonar el proyecto, restaura PostgreSQL con el backup publicado en Drive:
+
+[Carpeta DynamicQR (Google Drive)](https://drive.google.com/drive/folders/1OfNzcokS2aouNktqGQ3bkCZx0ijcLko8?usp=drive_link)
+
+Archivos en esa carpeta:
+
+- `db_dynamicqr.sql`
+- `textual.sql`
