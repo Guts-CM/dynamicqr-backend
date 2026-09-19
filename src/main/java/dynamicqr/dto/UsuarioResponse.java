@@ -13,6 +13,7 @@ public class UsuarioResponse {
     private LocalDateTime fechaCreacion;
     private Integer usuarioEditor;
     private LocalDateTime fechaEdicion;
+    private boolean activo;
 
     public Integer getUsuariosId() {
         return usuariosId;
@@ -84,5 +85,13 @@ public class UsuarioResponse {
 
     public void setFechaEdicion(LocalDateTime fechaEdicion) {
         this.fechaEdicion = fechaEdicion;
+    }
+
+    public boolean isActivo() {
+        return activo;
+    }
+
+    public void setActivo(boolean activo) {
+        this.activo = activo;
     }
 }

@@ -15,20 +15,23 @@ public class PublicEndpointMatcher implements RequestMatcher {
         String pathInfo = safe(request.getPathInfo());
         String combined = servlet + pathInfo;
 
-        if (isLogin(uri, servlet, combined)) {
+        if (isPublicAuth(uri, servlet, combined)) {
             return true;
         }
         // Servidor publico: descomentar para dejar abierta la URL corta de conteo.
         // if (isRedirect(uri, servlet, combined)) {
         //     return true;
         // }
-        return isGet(request) && isSvg(uri, servlet, combined);
+        return isGet(request) && isAsset(uri, servlet, combined);
     }
 
-    private boolean isLogin(String uri, String servlet, String combined) {
-        return uri.endsWith("/api/auth/login")
-                || servlet.equals("/api/auth/login")
-                || combined.equals("/api/auth/login");
+    private boolean isPublicAuth(String uri, String servlet, String combined) {
+        return isAuthPath(uri, servlet, combined, "/api/auth/login")
+                || isAuthPath(uri, servlet, combined, "/api/auth/password");
+    }
+
+    private boolean isAuthPath(String uri, String servlet, String combined, String path) {
+        return uri.endsWith(path) || servlet.equals(path) || combined.equals(path);
     }
 
     // private boolean isRedirect(String uri, String servlet, String combined) {
@@ -39,10 +42,12 @@ public class PublicEndpointMatcher implements RequestMatcher {
     //     return path.matches(".*/r/\\d+/?");
     // }
 
-    private boolean isSvg(String uri, String servlet, String combined) {
-        return uri.matches(".*/api/qr/\\d+/svg/?")
-                || servlet.matches(".*/api/qr/\\d+/svg/?")
-                || combined.matches(".*/api/qr/\\d+/svg/?");
+    private boolean isAsset(String uri, String servlet, String combined) {
+        return looksLikeAsset(uri) || looksLikeAsset(servlet) || looksLikeAsset(combined);
+    }
+
+    private boolean looksLikeAsset(String path) {
+        return path.matches(".*/api/qr/\\d+/(svg|png)/?");
     }
 
     private boolean isGet(HttpServletRequest request) {

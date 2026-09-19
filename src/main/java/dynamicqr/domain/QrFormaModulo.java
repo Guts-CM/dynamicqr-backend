@@ -2,6 +2,9 @@ package dynamicqr.domain;
 
 public enum QrFormaModulo {
     cuadrado,
+    suave,
     redondeado,
-    circulo
+    extra_redondeado,
+    circulo,
+    diamante
 }

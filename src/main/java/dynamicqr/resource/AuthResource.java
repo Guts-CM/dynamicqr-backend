@@ -1,5 +1,6 @@
 package dynamicqr.resource;
 
+import dynamicqr.dto.CambioPasswordRequest;
 import dynamicqr.dto.LoginRequest;
 import dynamicqr.dto.RegisterRequest;
 import dynamicqr.dto.TokenResponse;
@@ -31,6 +32,12 @@ public class AuthResource {
     @PostMapping("/login")
     public TokenResponse login(@Valid @RequestBody LoginRequest request) {
         return authService.login(request.getEmail(), request.getPassword());
+    }
+
+    @PostMapping("/password")
+    public TokenResponse cambiarPassword(@Valid @RequestBody CambioPasswordRequest request) {
+        return authService.cambiarPassword(
+                request.getEmail(), request.getPassword(), request.getPasswordNueva());
     }
 
     @PostMapping("/register")

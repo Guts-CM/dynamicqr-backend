@@ -12,7 +12,6 @@ public class UsuarioCreateRequest {
     @NotBlank
     private String nombre;
 
-    @NotBlank
     private String apellidoPaterno;
 
     private String apellidoMaterno;

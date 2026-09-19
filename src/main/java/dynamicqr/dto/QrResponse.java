@@ -13,11 +13,14 @@ public class QrResponse {
     private boolean activo;
     private int totalEscaneos;
     private Integer usuarioCreador;
+    private String nombreCreador;
     private LocalDateTime fechaCreacion;
     private Integer usuarioEditor;
+    private String nombreEditor;
     private LocalDateTime fechaEdicion;
     private String urlRedireccion;
     private String urlSvg;
+    private String urlPng;
     private QrEstiloRequest estilo;
 
     public Integer getQrId() {
@@ -84,6 +87,14 @@ public class QrResponse {
         this.usuarioCreador = usuarioCreador;
     }
 
+    public String getNombreCreador() {
+        return nombreCreador;
+    }
+
+    public void setNombreCreador(String nombreCreador) {
+        this.nombreCreador = nombreCreador;
+    }
+
     public LocalDateTime getFechaCreacion() {
         return fechaCreacion;
     }
@@ -98,6 +109,14 @@ public class QrResponse {
 
     public void setUsuarioEditor(Integer usuarioEditor) {
         this.usuarioEditor = usuarioEditor;
+    }
+
+    public String getNombreEditor() {
+        return nombreEditor;
+    }
+
+    public void setNombreEditor(String nombreEditor) {
+        this.nombreEditor = nombreEditor;
     }
 
     public LocalDateTime getFechaEdicion() {
@@ -122,6 +141,14 @@ public class QrResponse {
 
     public void setUrlSvg(String urlSvg) {
         this.urlSvg = urlSvg;
+    }
+
+    public String getUrlPng() {
+        return urlPng;
+    }
+
+    public void setUrlPng(String urlPng) {
+        this.urlPng = urlPng;
     }
 
     public QrEstiloRequest getEstilo() {

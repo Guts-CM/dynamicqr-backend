@@ -1,6 +1,7 @@
 package dynamicqr.resource;
 
 import dynamicqr.dto.MensajeResponse;
+import dynamicqr.dto.PasswordTemporalResponse;
 import dynamicqr.dto.UsuarioCreateRequest;
 import dynamicqr.dto.UsuarioResponse;
 import dynamicqr.dto.UsuarioUpdateRequest;
@@ -77,5 +78,11 @@ public class UsuarioResource {
             return ResponseEntity.badRequest()
                     .body(new MensajeResponse("hubo un error al eliminar o activar el usuario"));
         }
+    }
+
+    @PostMapping("/{id}/password-temporal")
+    public PasswordTemporalResponse generarPasswordTemporal(@PathVariable Integer id) {
+        String temporal = usuarioService.generarPasswordTemporal(id, securityUtils.currentUserId());
+        return new PasswordTemporalResponse(temporal);
     }
 }

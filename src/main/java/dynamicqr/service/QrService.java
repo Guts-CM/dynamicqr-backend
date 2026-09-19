@@ -7,7 +7,11 @@ import dynamicqr.dto.QrEstiloRequest;
 import dynamicqr.dto.QrResponse;
 import dynamicqr.dto.QrUpdateRequest;
 import jakarta.persistence.EntityNotFoundException;
+import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +23,7 @@ public class QrService {
     private final QrRepository qrRepository;
     private final QrSvgRenderer qrSvgRenderer;
     private final QrContenidoMapper qrContenidoMapper;
+    private final UsuarioService usuarioService;
     private final VersionService versionService;
     // Uso de escaneos pendiente hasta desplegar en un servidor publico.
     @SuppressWarnings("unused")
@@ -29,12 +34,14 @@ public class QrService {
             QrRepository qrRepository,
             QrSvgRenderer qrSvgRenderer,
             QrContenidoMapper qrContenidoMapper,
+            UsuarioService usuarioService,
             VersionService versionService,
             EscaneoService escaneoService,
             @Value("${app.public-base-url}") String publicBaseUrl) {
         this.qrRepository = qrRepository;
         this.qrSvgRenderer = qrSvgRenderer;
         this.qrContenidoMapper = qrContenidoMapper;
+        this.usuarioService = usuarioService;
         this.versionService = versionService;
         this.escaneoService = escaneoService;
         this.publicBaseUrl = trimSlash(publicBaseUrl);
@@ -42,7 +49,18 @@ public class QrService {
 
     @Transactional(readOnly = true)
     public List<QrResponse> findAll() {
-        return qrRepository.findAll().stream().map(this::toResponse).toList();
+        List<Qr> registros = qrRepository.findAll();
+        Set<Integer> ids = new HashSet<>();
+        for (Qr qr : registros) {
+            if (qr.getUsuarioCreador() != null) {
+                ids.add(qr.getUsuarioCreador());
+            }
+            if (qr.getUsuarioEditor() != null) {
+                ids.add(qr.getUsuarioEditor());
+            }
+        }
+        Map<Integer, String> nombres = usuarioService.nombresPorId(ids);
+        return registros.stream().map(qr -> toResponse(qr, nombres)).toList();
     }
 
     @Transactional(readOnly = true)
@@ -94,7 +112,7 @@ public class QrService {
             actual.setDestinoUrl(null);
         }
         actual.setContenido(qrContenidoMapper.escribir(actual.getTipo(), payloadNuevo, estiloNuevo));
-        actual.setUsuarioEditor(editorId);
+        marcarEdicion(actual, editorId);
 
         String destinoNuevo = qrContenidoMapper.destinoHistorial(
                 actual.getTipo(), actual.getDestinoUrl(), actual.getContenido());
@@ -113,7 +131,7 @@ public class QrService {
     public boolean toggleActivo(Integer id, Integer editorId) {
         Qr actual = findEntity(id);
         actual.setActivo(!actual.isActivo());
-        actual.setUsuarioEditor(editorId);
+        marcarEdicion(actual, editorId);
         qrRepository.save(actual);
         return actual.isActivo();
     }
@@ -122,6 +140,12 @@ public class QrService {
     public String generarSvg(Integer id) {
         Qr qr = findEntity(id);
         return qrSvgRenderer.render(payloadCodificado(qr), qrContenidoMapper.leerEstilo(qr.getContenido()));
+    }
+
+    @Transactional(readOnly = true)
+    public byte[] generarPng(Integer id) {
+        Qr qr = findEntity(id);
+        return qrSvgRenderer.renderPng(payloadCodificado(qr), qrContenidoMapper.leerEstilo(qr.getContenido()));
     }
 
     // --- Escaneos / URL corta: descomentar al desplegar en un servidor publico ---
@@ -154,6 +178,11 @@ public class QrService {
                 .orElseThrow(() -> new EntityNotFoundException("QR " + id + " no encontrado"));
     }
 
+    private void marcarEdicion(Qr qr, Integer editorId) {
+        qr.setUsuarioEditor(editorId);
+        qr.setFechaEdicion(LocalDateTime.now());
+    }
+
     private void validarDatos(QrTipo tipo, String destinoUrl, String contenido) {
         if (tipo == QrTipo.url) {
             if (destinoUrl == null || destinoUrl.isBlank()) {
@@ -182,6 +211,17 @@ public class QrService {
     }
 
     private QrResponse toResponse(Qr qr) {
+        Set<Integer> ids = new HashSet<>();
+        if (qr.getUsuarioCreador() != null) {
+            ids.add(qr.getUsuarioCreador());
+        }
+        if (qr.getUsuarioEditor() != null) {
+            ids.add(qr.getUsuarioEditor());
+        }
+        return toResponse(qr, usuarioService.nombresPorId(ids));
+    }
+
+    private QrResponse toResponse(Qr qr, Map<Integer, String> nombres) {
         QrResponse response = new QrResponse();
         response.setQrId(qr.getQrId());
         response.setNombre(qr.getNombre());
@@ -193,11 +233,14 @@ public class QrService {
         response.setActivo(qr.isActivo());
         response.setTotalEscaneos(qr.getTotalEscaneos());
         response.setUsuarioCreador(qr.getUsuarioCreador());
+        response.setNombreCreador(nombreDe(qr.getUsuarioCreador(), nombres));
         response.setFechaCreacion(qr.getFechaCreacion());
         response.setUsuarioEditor(qr.getUsuarioEditor());
+        response.setNombreEditor(nombreDe(qr.getUsuarioEditor(), nombres));
         response.setFechaEdicion(qr.getFechaEdicion());
         // Servidor publico: response.setUrlRedireccion(qr.getTipo() == QrTipo.url ? urlRedireccion(qr.getQrId()) : null);
         response.setUrlSvg(publicBaseUrl + "/api/qr/" + qr.getQrId() + "/svg");
+        response.setUrlPng(publicBaseUrl + "/api/qr/" + qr.getQrId() + "/png");
         response.setEstilo(qrContenidoMapper.leerEstilo(qr.getContenido()));
         return response;
     }
@@ -205,6 +248,13 @@ public class QrService {
     // private String urlRedireccion(Integer qrId) {
     //     return publicBaseUrl + "/r/" + qrId;
     // }
+
+    private String nombreDe(Integer usuarioId, Map<Integer, String> nombres) {
+        if (usuarioId == null || nombres == null) {
+            return null;
+        }
+        return nombres.get(usuarioId);
+    }
 
     private String trimSlash(String value) {
         if (value == null || value.isBlank()) {

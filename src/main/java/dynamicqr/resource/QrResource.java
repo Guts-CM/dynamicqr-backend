@@ -10,6 +10,7 @@ import dynamicqr.service.QrService;
 import dynamicqr.service.VersionService;
 import jakarta.validation.Valid;
 import java.util.List;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -53,7 +54,18 @@ public class QrResource {
 
     @GetMapping(value = "/{id}/svg", produces = "image/svg+xml")
     public ResponseEntity<String> svg(@PathVariable Integer id) {
-        return ResponseEntity.ok().contentType(SVG).body(qrService.generarSvg(id));
+        return ResponseEntity.ok()
+                .contentType(SVG)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"qr-" + id + ".svg\"")
+                .body(qrService.generarSvg(id));
+    }
+
+    @GetMapping(value = "/{id}/png", produces = MediaType.IMAGE_PNG_VALUE)
+    public ResponseEntity<byte[]> png(@PathVariable Integer id) {
+        return ResponseEntity.ok()
+                .contentType(MediaType.IMAGE_PNG)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"qr-" + id + ".png\"")
+                .body(qrService.generarPng(id));
     }
 
     // Uso de escaneos pendiente hasta desplegar en un servidor publico.
