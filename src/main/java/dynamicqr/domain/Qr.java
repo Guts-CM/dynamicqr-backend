@@ -1,6 +1,7 @@
 package dynamicqr.domain;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -13,6 +14,8 @@ import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import java.util.Objects;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Entity
 @Table(
@@ -53,12 +56,14 @@ public class Qr {
     @Column(name = "usuario_creador", nullable = false)
     private Integer usuarioCreador;
 
+    @JdbcTypeCode(SqlTypes.TIMESTAMP)
     @Column(name = "fecha_creacion", nullable = false)
     private LocalDateTime fechaCreacion;
 
     @Column(name = "usuario_editor", nullable = false)
     private Integer usuarioEditor;
 
+    @Convert(converter = WallClockLocalDateTimeConverter.class)
     @Column(name = "fecha_edicion", nullable = false)
     private LocalDateTime fechaEdicion;
 
